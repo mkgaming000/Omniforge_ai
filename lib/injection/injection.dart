@@ -266,6 +266,7 @@ Future<void> configureDependencies() async {
       saveApiKeyUseCase: getIt<SaveApiKeyUseCase>(),
       getApiKeyUseCase: getIt<GetApiKeyUseCase>(),
       deleteApiKeyUseCase: getIt<DeleteApiKeyUseCase>(),
+      providerFactory: getIt<AIProviderFactory>(),
     ),
   );
   getIt.registerFactory<ImageBloc>(

@@ -104,10 +104,19 @@ class _ProviderKeyCard extends StatelessWidget {
   }
 
   void _showKeyDialog(BuildContext context) {
+    // IMPORTANT: capture the bloc reference here, BEFORE showDialog creates a
+    // new Navigator route with a new BuildContext. Inside the dialog's builder,
+    // `context` refers to the dialog's own context — a child of the Navigator,
+    // not of the BlocProvider — so context.read<ApiKeyBloc>() would throw a
+    // ProviderNotFoundException and the Save/Delete buttons would silently do
+    // nothing. Capturing it here (while we're still inside the BlocProvider
+    // subtree) is the correct Flutter pattern for using blocs in dialogs.
+    final bloc = context.read<ApiKeyBloc>();
     final controller = TextEditingController();
-    showDialog(
+
+    showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('${provider.displayName} API Key'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -132,40 +141,39 @@ class _ProviderKeyCard extends StatelessWidget {
             if (provider.requiresApiKey)
               Text(
                 'Get your key at ${_signupUrl(provider)}',
-                style: Theme.of(context).textTheme.labelSmall,
+                style: Theme.of(dialogContext).textTheme.labelSmall,
               ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           if (configured)
             TextButton(
               onPressed: () {
-                context.read<ApiKeyBloc>().add(DeleteApiKey(provider));
-                Navigator.of(context).pop();
+                // Use the captured `bloc`, not context.read() — see note above.
+                bloc.add(DeleteApiKey(provider));
+                Navigator.of(dialogContext).pop();
               },
               style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(dialogContext).colorScheme.error,
               ),
               child: const Text('Remove'),
             ),
           FilledButton(
             onPressed: () {
-              if (controller.text.isEmpty) return;
-              context
-                  .read<ApiKeyBloc>()
-                  .add(SaveApiKey(provider, controller.text));
-              Navigator.of(context).pop();
+              if (controller.text.trim().isEmpty) return;
+              // Use the captured `bloc`, not context.read() — see note above.
+              bloc.add(SaveApiKey(provider, controller.text.trim()));
+              Navigator.of(dialogContext).pop();
             },
             child: const Text('Save'),
           ),
         ],
       ),
-    );
-  }
+    ).then((_) => controller.dispose()); // dispose controller when dialog closes
 
   String _signupUrl(AIProvider provider) {
     switch (provider) {
