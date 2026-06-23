@@ -1,6 +1,5 @@
 import java.util.Properties
 import java.io.FileInputStream
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -63,11 +62,12 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    // `kotlinOptions { jvmTarget = "..." }` is deprecated in AGP 8.3+ and
-    // removed in Kotlin 2.2.x. Migrated to the new `compilerOptions` DSL
-    // which uses the type-safe JvmTarget enum.
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+    // AGP 8.6.0's `android.kotlinOptions` (com.android.build.api.dsl.KotlinJvmOptions)
+    // is completely separate from KGP's removed task-level KotlinJvmOptions.
+    // android.compilerOptions does NOT exist in AGP 8.6.0 for com.android.application
+    // (only available in AGP 8.7+ / KMP). Using kotlinOptions here is correct.
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     defaultConfig {
