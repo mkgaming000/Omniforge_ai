@@ -173,7 +173,9 @@ class _ProviderKeyCard extends StatelessWidget {
           ),
         ],
       ),
-    ).then((_) => controller.dispose()); // dispose controller when dialog closes
+    ).then(
+      (_) => controller.dispose(),
+    ); // dispose controller when dialog closes
   }
 
   String _signupUrl(AIProvider provider) {
